@@ -84,16 +84,28 @@ final class InstantiationModelAwarePointcutAdvisorImpl
 			Method aspectJAdviceMethod, AspectJAdvisorFactory aspectJAdvisorFactory,
 			MetadataAwareAspectInstanceFactory aspectInstanceFactory, int declarationOrder, String aspectName) {
 
+		//当前的切点
 		this.declaredPointcut = declaredPointcut;
+		//切面的class对象
 		this.declaringClass = aspectJAdviceMethod.getDeclaringClass();
+		//切面方法名称
 		this.methodName = aspectJAdviceMethod.getName();
+		//切面方法的参数类型
 		this.parameterTypes = aspectJAdviceMethod.getParameterTypes();
+		//切面方法对象
 		this.aspectJAdviceMethod = aspectJAdviceMethod;
+		//aspectJ的通知工厂
 		this.aspectJAdvisorFactory = aspectJAdvisorFactory;
+		//aspect的实例工厂
 		this.aspectInstanceFactory = aspectInstanceFactory;
+		//切面的顺序
 		this.declarationOrder = declarationOrder;
+		//切面的名称
 		this.aspectName = aspectName;
 
+		/**
+		 * 判断当前的切面对象是否需要延迟加载
+		 */
 		if (aspectInstanceFactory.getAspectMetadata().isLazilyInstantiated()) {
 			// Static part of the pointcut is a lazy type.
 			Pointcut preInstantiationPointcut = Pointcuts.union(
@@ -110,6 +122,7 @@ final class InstantiationModelAwarePointcutAdvisorImpl
 			// A singleton aspect.
 			this.pointcut = this.declaredPointcut;
 			this.lazy = false;
+			//把切面中的通知构造为一个个切面对象
 			this.instantiatedAdvice = instantiateAdvice(this.declaredPointcut);
 		}
 	}

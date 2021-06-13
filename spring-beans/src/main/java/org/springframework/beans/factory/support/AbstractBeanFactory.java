@@ -258,6 +258,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
+			//判断该bean是不是FactoryBean（FactoryBean的getObject方法为懒加载，该方法调用）
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 
@@ -292,6 +293,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					return (T) parentBeanFactory.getBean(nameToLookup);
 				}
 			}
+
+			/** 从当前代码开始，为创建bean的逻辑 */
+
 
 			if (!typeCheckOnly) {
 				markBeanAsCreated(beanName);

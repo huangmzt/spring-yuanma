@@ -16,6 +16,7 @@
 
 package org.springframework.aop.framework.autoproxy;
 
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +50,7 @@ import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostP
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import sun.misc.ProxyGenerator;
 
 /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor} implementation
@@ -332,23 +334,42 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @return a proxy wrapping the bean, or the raw bean instance as-is
 	 */
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
+		//已经被处理过
 		if (StringUtils.hasLength(beanName) && this.targetSourcedBeans.contains(beanName)) {
 			return bean;
 		}
+		//不需要增强的
 		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
 			return bean;
 		}
+		//是不是基础的bean，是不是需要跳过
 		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
 			this.advisedBeans.put(cacheKey, Boolean.FALSE);
 			return bean;
 		}
 
-		// Create proxy if we have advice.
+		// Create proxy if we have advice.如果有通知对象就创建proxy代理对象
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		if (specificInterceptors != DO_NOT_PROXY) {
+			//表示当前的对象已经被代理模式处理过了
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
+			//创建真正的代理对象
 			Object proxy = createProxy(
 					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
+
+			//代理class文件
+//			try {
+//				byte[] proxyClass = ProxyGenerator.generateProxyClass(proxy.getClass()
+//						.getSimpleName(), proxy.getClass().getInterfaces());
+//				FileOutputStream outputStream = new FileOutputStream(new File(
+//						"C:\\Users\\hmzt/$Proxy0.class"));
+//				outputStream.write(proxyClass);
+//				outputStream.flush();
+//				outputStream.close();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+			//加入到缓存
 			this.proxyTypes.put(cacheKey, proxy.getClass());
 			return proxy;
 		}
@@ -446,9 +467,11 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
 		}
 
+		//创建一个代理对象工厂
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.copyFrom(this);
 
+		//为proxyFactory设置创建jdk代理还是cglib代理
 		if (!proxyFactory.isProxyTargetClass()) {
 			if (shouldProxyTargetClass(beanClass, beanName)) {
 				proxyFactory.setProxyTargetClass(true);
@@ -458,8 +481,11 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			}
 		}
 
+		//把specificInterceptors中的对象数组转化为Advisor[]形式的
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
+		//为我们的代理工厂加入通知器
 		proxyFactory.addAdvisors(advisors);
+		//设置targetSource对象
 		proxyFactory.setTargetSource(targetSource);
 		customizeProxyFactory(proxyFactory);
 
@@ -468,6 +494,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			proxyFactory.setPreFiltered(true);
 		}
 
+		//真正地创建代理对象
 		return proxyFactory.getProxy(getProxyClassLoader());
 	}
 
