@@ -304,6 +304,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			try {
 				/**
 				 * 从容器中获取beanName相应的GenericBeanDefinition对象，并将其转换为RootBeanDefinition对象
+				 * 合并后的beanDefinition
 				 */
 				RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 				//检查当前的bean定义是否是抽象的bean定义
@@ -316,13 +317,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					//即循环依赖的情况：抛出BeanCreationException异常
 					for (String dep : dependsOn) {
 						//beanName是当前正在创建的对象的bean，dep是正在创建的bean所依赖的bean
+						//即判断两个bean是否通过@DependOn注解互相依赖
 						if (isDependent(beanName, dep)) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
+						//依赖关系存入map中
 						registerDependentBean(dep, beanName);
 						try {
-							//获取dependsOn的bean
+							//先去生成dependsOn注解依赖的bean
 							getBean(dep);
 						}
 						catch (NoSuchBeanDefinitionException ex) {
@@ -348,7 +351,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					});
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
-
+				//创建原型bean
 				else if (mbd.isPrototype()) {
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
@@ -362,6 +365,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
 
+				//其他作用域（非单例，非原型）
 				else {
 					String scopeName = mbd.getScope();
 					if (!StringUtils.hasLength(scopeName)) {
@@ -1397,6 +1401,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws CannotLoadBeanClassException {
 
 		try {
+			//如果BeanDefinition的beanClass属性是class对象，直接返回
 			if (mbd.hasBeanClass()) {
 				return mbd.getBeanClass();
 			}
@@ -1405,6 +1410,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						() -> doResolveBeanClass(mbd, typesToMatch), getAccessControlContext());
 			}
 			else {
+				//beanClass为class的全限定名字符串，通过全限定名加载类并返回类的class对象
 				return doResolveBeanClass(mbd, typesToMatch);
 			}
 		}

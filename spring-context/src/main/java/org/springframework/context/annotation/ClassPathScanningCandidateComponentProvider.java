@@ -427,15 +427,19 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				}
 				if (resource.isReadable()) {
 					try {
+						//根据资源文件读取出初始信息
 						MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
+						//判断是不是component的候选者---匹配includeFilters和excludeFilters
+						// ---其中includeFilters包含匹配component
 						if (isCandidateComponent(metadataReader)) {
 							ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
 							sbd.setSource(resource);
+							//判断接口和抽象类
 							if (isCandidateComponent(sbd)) {
 								if (debugEnabled) {
 									logger.debug("Identified candidate component class: " + resource);
 								}
-								/** 加入可以被放入BDE里面的类 */
+								/** 加入可以被放入beanDefinition里面的类 */
 								candidates.add(sbd);
 							}
 							else {
@@ -525,6 +529,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 */
 	protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
 		AnnotationMetadata metadata = beanDefinition.getMetadata();
+		//不是接口和抽象类，或者抽象类上面有lookup注解
 		return (metadata.isIndependent() && (metadata.isConcrete() ||
 				(metadata.isAbstract() && metadata.hasAnnotatedMethods(Lookup.class.getName()))));
 	}

@@ -83,10 +83,12 @@ public class InjectionMetadata {
 		Collection<InjectedElement> elementsToIterate =
 				(checkedElements != null ? checkedElements : this.injectedElements);
 		if (!elementsToIterate.isEmpty()) {
+			//遍历每个能注入的属性
 			for (InjectedElement element : elementsToIterate) {
 				if (logger.isTraceEnabled()) {
 					logger.trace("Processing injected element of bean '" + beanName + "': " + element);
 				}
+				//element可能是filed也可能是method，跳转至AutowiredAnnotationBeanPostProcessor的inject方法
 				element.inject(target, beanName, pvs);
 			}
 		}

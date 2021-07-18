@@ -26,6 +26,7 @@ public class Person {
     }
 
     public void setAge(int age) {
+		System.out.println("setAge");
         this.age = age;
     }
 }

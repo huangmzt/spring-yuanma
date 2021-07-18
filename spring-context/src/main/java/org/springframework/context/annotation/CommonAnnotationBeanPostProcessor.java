@@ -516,14 +516,19 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		if (factory instanceof AutowireCapableBeanFactory) {
 			AutowireCapableBeanFactory beanFactory = (AutowireCapableBeanFactory) factory;
 			DependencyDescriptor descriptor = element.getDependencyDescriptor();
+			//isDefaultName为true表示@Resource没有配置name属性
+			//!factory.containsBean(name)表明beanFactory中找不到该name的bean
 			if (this.fallbackToDefaultTypeMatch && element.isDefaultName && !factory.containsBean(name)) {
 				autowiredBeanNames = new LinkedHashSet<>();
+				//跟@Autowired注解一样，byType，byName
 				resource = beanFactory.resolveDependency(descriptor, requestingBeanName, autowiredBeanNames, null);
 				if (resource == null) {
 					throw new NoSuchBeanDefinitionException(element.getLookupType(), "No resolvable resource object");
 				}
 			}
 			else {
+				//配置了name属性 或者是 factory.containsBean(name)为true
+				//直接getBean(name)获取对象
 				resource = beanFactory.resolveBeanByName(name, descriptor);
 				autowiredBeanNames = Collections.singleton(name);
 			}
@@ -604,8 +609,10 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		public ResourceElement(Member member, AnnotatedElement ae, @Nullable PropertyDescriptor pd) {
 			super(member, pd);
 			Resource resource = ae.getAnnotation(Resource.class);
+			//@Resource指定name的值
 			String resourceName = resource.name();
 			Class<?> resourceType = resource.type();
+			//如果@Resource注解没有指定name，使用默认生成的名字
 			this.isDefaultName = !StringUtils.hasLength(resourceName);
 			if (this.isDefaultName) {
 				resourceName = this.member.getName();

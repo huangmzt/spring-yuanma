@@ -134,14 +134,18 @@ class ConfigurationClassBeanDefinitionReader {
 			return;
 		}
 
+		//如果是被导入进来的类，注册为beanDefinition，并解析各种属性
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
+		//@bean方法的类
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
 
+		//处理@importResource
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
+			//处理@import进来的importBeanDefinetionRegistrar
 		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
 	}
 
@@ -178,6 +182,7 @@ class ConfigurationClassBeanDefinitionReader {
 		String methodName = metadata.getMethodName();
 
 		// Do we need to mark the bean as skipped by its condition?
+		//@conditional注解解析
 		if (this.conditionEvaluator.shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN)) {
 			configClass.skippedBeanMethods.add(methodName);
 			return;

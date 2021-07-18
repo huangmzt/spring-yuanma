@@ -522,39 +522,50 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			//准备beanFactory
+
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				//空方法，扩展用，子类对beanFactory做一些改变
 				postProcessBeanFactory(beanFactory);
 
 				/**
 				 * 通过@ComponentScan注解扫描所有应该被注入的自定义类进入BeanDefinitionMap
 				 * 调用bean工厂的后置处理器
 				 */
-				// 调用在上下文中注册为bean的工厂处理器
+				// 调用到这步时只有6个beanDefinition，其中只有ConfigurationClassPostProcessor是beanFactoryPostProcessor
+				//ConfigurationClassPostProcessor对有@component的扫描得到beanDefinition
+				//ps：扫描过程中可能得到其他beanFactoryPostProcessor，会继续执行这些bean工厂后置处理器
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				//扫描出来的beanPostProcessor，实例化并注册到beanFactory中
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
+				//国际化
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				//初始化事件多播器，用于发布监听事件
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				//扩展点，springboot在此初始化tomcat
 				onRefresh();
 
 				// Check for listener beans and register them.
 				registerListeners();
 
 				// 实例化所有剩余的（非延迟初始化）单例
-				/** 通过BeanNames和BeanDefinitionMap将对象加入单例缓存池 */
+				/** 完成beanFactory的初始化（实例化非懒加载的单例bean） */
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
+				//ContextRefreshedEvent在此发布，扩展点
+				//Lifecycle的start方法，执行，扩展点
 				finishRefresh();
 			}
 
@@ -602,10 +613,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Initialize any placeholder property sources in the context environment.
+		//扩展点，允许子类设置一些属性到Environment
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
+		//检查Environment里面的一些必要属性
+		//getEnvironment().setRequiredProperties("xxx");表明一定要有xxx属性
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...
@@ -655,7 +669,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
+		//注册ApplicationContextAwareProcessor
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
+		//将注册的这些aware的set方法忽略掉，不进行xml形式的自动注入
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
 		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
@@ -665,12 +681,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
+		//将ApplicationContext对象放入beanFactory,getBean(type)时使用
 		beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
 		beanFactory.registerResolvableDependency(ResourceLoader.class, this);
 		beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
 		beanFactory.registerResolvableDependency(ApplicationContext.class, this);
 
 		// Register early post-processor for detecting inner beans as ApplicationListeners.
+		//处理接口形式的监听器的bean的后置处理器，检查一个bean是不是applicationListener
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
@@ -681,6 +699,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Register default environment beans.
+		//注册environment、SystemProperties、SystemEnvironment对象到单例池
 		if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
 			beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
 		}

@@ -86,6 +86,7 @@ abstract class ConfigurationClassUtils {
 			return false;
 		}
 
+		//解析元数据metadata
 		AnnotationMetadata metadata;
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
@@ -112,9 +113,12 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
+		//是否存在Configuration注解
 		if (isFullConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
+		//Configuration的候选者：Component/ComponentScan/Import/ImportResource
+		//方法上有没有Bean注解
 		else if (isLiteConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
@@ -122,6 +126,7 @@ abstract class ConfigurationClassUtils {
 			return false;
 		}
 
+		//添加order属性，表明解析配置类顺序
 		// It's a full or lite configuration candidate... Let's determine the order value, if any.
 		Integer order = getOrder(metadata);
 		if (order != null) {

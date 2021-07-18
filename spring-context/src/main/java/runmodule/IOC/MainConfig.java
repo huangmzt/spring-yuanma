@@ -8,11 +8,10 @@ import org.springframework.context.annotation.Configuration;
 @ComponentScan(basePackages = {"runmodule.IOC"})
 public class MainConfig {
 
-    @Bean
-    public Person person(){
-        Person person = new Person();
-        person.setName("张三");
-        person.setAge(18);
-        return person;
-    }
+//    @Bean(initMethod = "initMethod")
+//    public Person person(){
+//        Person person = new Person();
+//        person.setName("张三");
+//        return person;
+//    }
 }
